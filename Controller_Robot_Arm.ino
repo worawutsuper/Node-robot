@@ -1,20 +1,33 @@
-// Add Liabrary
-#include <ESP8266WiFi.h> //Connected WiFi
-#include <Servo.h>  //Use Servo
+//นี่คือโค้ด ฝั่ง nodeMCU
 
-#define SERVO_PIN D2  // นี่คือกำหนดขาให้ Servo ไฟมากน้อยขึ้นกะองศาservoด้วย
+// Add Libraey
+#include <ESP8266WiFi.h>  // Connected WiFi
+#include <Servo.h>        // Use Servo
 
-const char* ssid     = "shareEWTC";     // Set SSID 
-const char* password = "12345abcde"; // Set password 
-const char* host = "dweet.io";          // Set host  
+#define SERVO_PIN D2  // นี่คือกำหนดขาให้ Servo
 
+const char* ssid     = "Happy Phone 3G 4.0\"";     // Set SSID shareEWTC
+const char* password = "900791d51808"; // Set password 12345abcde
+const char* host = "dweet.io";          // Set host 
 
-Servo myservo;  // ประกาศ object ของการใช้ Servo
+int intStart[4] = {129,50,100,120}; 
+int intEnd[4] = {154,120,120,130};
+//Happy Phone 3G 4.0" ==> 900791d51808  
+//AndroidAP-DUOS ==> nzdn0541
+Servo myservo,myservo1,myservo2,myservo3;  // ประกาศ object ของการใช้ Servo
 int analogValue;
+
+// ##############################################################################
+// setup
+// ##############################################################################
 
 void setup() 
 {
-  myservo.attach(SERVO_PIN);
+  //myservo.attach(SERVO_PIN);
+  myservo.attach(4);
+  myservo.attach(0);
+  myservo.attach(2);
+  myservo.attach(14);
   Serial.begin(115200);                 // Print setting message
   delay(10);
   Serial.println();
@@ -33,6 +46,11 @@ void setup()
   Serial.println(WiFi.localIP());       // Print IP address
 } // setup
 
+// ##############################################################################
+// loop
+// ##############################################################################
+
+
 void loop() 
 {
   // Use WiFiClient class to create TCP connections
@@ -44,23 +62,34 @@ void loop()
     return;
   }
 
+  // ##############################################################################
+  //https://dweet.io/get/latest/dweet/for/SuperMaster
+  // ##############################################################################
   
-  //https://dweet.io/get/latest/dweet/for/SuperWorawut
   client.print(String("GET /get/latest/dweet/for/SuperWorawut HTTP/1.1\r\n") +
                "Host: " + host + "\r\n" +
                "Connection: keep-alive\r\n" +
                "Cache-Control: max-age=0\r\n\r\n");
-  delay(1000);
+  delay(3000);
+  
   while (client.available()) 
   {
-    String line = client.readStringUntil('\r');
-    Serial.println(line);
+    String strJSON = client.readStringUntil('\r');
+    Serial.println(strJSON);  // Display All JSON
 
-    String test = line.substring(140, 143);
-    Serial.println(test);
+    String strAnalog = strJSON.substring(140, 143);
+    Serial.println(strAnalog);  // Display only Value from Dweet
 
-    analogValue = test.toInt(); // Change String to int
-    //analogValue = map(analogValue, 0, 1023, 0, 140);
+    String strServo = strJSON.substring(137,138);
+    Serial.println();
+    Serial.println("Servo==> ");
+    Serial.println(strServo);
+
+    analogValue = strAnalog.toInt(); // Change String to int
+    int index =strServo.toInt();
+
+    //การกำหนด องศา ของ Servo (ตัวแปร, ค่าเริ่มต้น, 0, 179)
+    analogValue = map(analogValue, 0, 100, intStart[0], intEnd[0]);
 
     Serial.println();
     Serial.println();
@@ -68,8 +97,11 @@ void loop()
     Serial.println(analogValue);
     
     myservo.write(analogValue);
-
-    
+  
   } // while
+  Serial.println();
+  Serial.println();
+  Serial.print("andlogValue ==> ");
+  Serial.println(analogValue);
+  
 } // loop
-
